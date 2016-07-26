@@ -3,22 +3,30 @@ namespace Flash;
 
 class Configger
 {
-    private static $directFile = array('slim');
-    private static $envFile = array('logger', 'mysql');
+    protected $directFile;
+    protected $envFile;
+    protected $env;
 
-    public static function getConfig($env)
+    public function __construct($env, $directFile, $envFile)
+    {
+        $this->env = $env;
+        $this->directFile = $directFile;
+        $this->envFile    = $envFile;
+    }
+
+    public function getConfig()
     {
         $config = array();
-        foreach (self::$directFile as $name) {
-            $config = array_merge($config, self::getConfigFromFile($name));
+        foreach ($this->directFile as $name) {
+            $config = array_merge($config, $this->getConfigFromFile($name));
         }
-        foreach (self::$envFile as $name) {
-            $config = array_merge($config, self::getConfigFromFile($name, $env));
+        foreach ($this->envFile as $name) {
+            $config = array_merge($config, $this->getConfigFromFile($name, $env));
         }
         return $config;
     }
 
-    private static function getConfigFromFile($name, $env=null)
+    protected function getConfigFromFile($name, $env=null)
     {
         if (is_null($env)) {
             $path = '/src/Config/%s.php';
