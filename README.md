@@ -1,2 +1,2 @@
-# flash
-hey, flash~ wanna hear a joke?
+# Flash
+hey, Flash~ wanna hear a joke?
