@@ -4,7 +4,8 @@
     "homepage": "https://github.com/bradelement/flash",
     "license": "MIT",
     "keywords": [
-        "bradelement"
+        "bradelement",
+        "Ioc"
     ],
     "require": {
         "php": ">=5.5.0",
