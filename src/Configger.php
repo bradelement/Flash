@@ -21,7 +21,7 @@ class Configger
             $config = array_merge($config, $this->getConfigFromFile($name));
         }
         foreach ($this->envFile as $name) {
-            $config = array_merge($config, $this->getConfigFromFile($name, $env));
+            $config = array_merge($config, $this->getConfigFromFile($name, $this->env));
         }
         return $config;
     }
