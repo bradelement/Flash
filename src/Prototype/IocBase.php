@@ -14,6 +14,9 @@ abstract class IocBase
 
     public function __get($name)
     {
+        if (isset($this->$name)) {
+            return $this->$name;
+        }
         return $this->ci->get($name);
     }
 }
