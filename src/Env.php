@@ -13,7 +13,17 @@ class Env
     public static function getEnv()
     {
         if (is_null(self::$env)) {
-            $env = self::getEnvFromFile();
+            //self::$env = self::getEnvFromFile();
+            self::$env = self::getEnvFromRuntime();
+        }
+        return self::$env;
+    }
+
+    protected static function getEnvFromRuntime()
+    {
+        $env = strtolower($_SERVER['RUNTIME_ENVIROMENT']);
+        if (!in_array($env, self::$valid)) {
+            exit('env is not valid');
         }
         return $env;
     }
