@@ -13,8 +13,8 @@ class Env
     public static function getEnv()
     {
         if (is_null(self::$env)) {
-            //self::$env = self::getEnvFromFile();
-            self::$env = self::getEnvFromRuntime();
+            self::$env = self::getEnvFromFile();
+            //self::$env = self::getEnvFromRuntime();
         }
         return self::$env;
     }
