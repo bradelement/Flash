@@ -30,8 +30,7 @@ abstract class BaseRpc extends IocBase
     {
         $this->logger = $this->ci->get('logger');
 
-        $stack = new HandlerStack();
-        $stack->setHandler(\GuzzleHttp\choose_handler());
+        $stack = HandlerStack::create();
         $stack->push($this->replace_uri());
         $stack->push($this->log($this->logger));
 

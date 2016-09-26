@@ -13,8 +13,7 @@ abstract class V4Rpc extends BaseRpc
     {
         $this->logger = $ci->get('logger');
 
-        $stack = new HandlerStack();
-        $stack->setHandler(\GuzzleHttp\choose_handler());
+        $stack = HandlerStack::create();
         $stack->push($this->replace_uri());
         $stack->push($this->v4_sign());
         $stack->push($this->log($this->logger));
