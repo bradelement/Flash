@@ -11,6 +11,7 @@ use GuzzleHttp\RetryMiddleware;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\Exception\TransferException;
+use GuzzleHttp\Exception\ConnectException;
 
 abstract class BaseRpc extends IocBase
 {
@@ -18,7 +19,7 @@ abstract class BaseRpc extends IocBase
     protected $logger;
 
     protected $base_uri = array();
-    protected $timeout = 10;
+    protected $timeout = 5;
     protected $api_list = array();
 
     public function __construct($ci)
@@ -35,7 +36,7 @@ abstract class BaseRpc extends IocBase
         $stack->push($this->replace_uri());
         $stack->push(Middleware::retry($this->retryDecider(), $this->retryDelay()));
         $stack->push($this->log($this->logger));
-        
+
         $this->client = new Client(array(
             'handler'  => $stack,
             'base_uri' => $this->base_uri[ENV],
