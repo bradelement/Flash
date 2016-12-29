@@ -7,6 +7,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\RetryMiddleware;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\Exception\TransferException;
@@ -32,8 +33,9 @@ abstract class BaseRpc extends IocBase
 
         $stack = HandlerStack::create();
         $stack->push($this->replace_uri());
+        $stack->push(Middleware::retry($this->retryDecider(), $this->retryDelay()));
         $stack->push($this->log($this->logger));
-
+        
         $this->client = new Client(array(
             'handler'  => $stack,
             'base_uri' => $this->base_uri[ENV],
@@ -166,5 +168,30 @@ abstract class BaseRpc extends IocBase
             return (string)$response->getBody();
         }
         return '';
+    }
+
+    protected function retryDecider()
+    {
+        return function($retry, $request, $response, $exception){
+            if ($retry >= 2) {//最多重试两次
+                return false;
+            }
+            if ($exception instanceof ConnectException) {
+                return true;
+            }
+            if ($response) {
+                if ($response->getStatusCode() == 503) {
+                    return true;
+                }
+            }
+            return false;
+        };
+    }
+
+    protected function retryDelay()
+    {
+        return function($num){
+            return RetryMiddleware::exponentialDelay($num) * 500;
+        };
     }
 }
