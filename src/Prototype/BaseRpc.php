@@ -36,12 +36,13 @@ abstract class BaseRpc extends IocBase
         $stack = HandlerStack::create();
         $stack->push($this->replace_uri());
         $stack->push(Middleware::retry($this->retryDecider(), $this->retryDelay()));
+        $stack->push($this->log());
+
 
         $this->client = new Client(array(
             'handler'  => $stack,
             'base_uri' => $this->base_uri[ENV],
             'timeout'  => $this->timeout,
-            'on_stats' => $this->log(),
         ));
     }
 
@@ -61,6 +62,7 @@ abstract class BaseRpc extends IocBase
         $request_option = $this->merge_option($request_option, $default_options);
         $request_option = $this->merge_option($request_option, $options);
 
+        $clock = new Clock();
         try {
             $response = $this->client->request($method, $uri, $request_option);
         } catch (TransferException $e) {
@@ -68,6 +70,9 @@ abstract class BaseRpc extends IocBase
                 $response = $e->getResponse();
             }
         }
+        $time = $clock->spent();
+        $res = $this->log_response($response);
+        $this->logger->info("get response: res($res) time($time)");
 
         return $response;
     }
@@ -127,16 +132,14 @@ abstract class BaseRpc extends IocBase
         };
     }
 
-    protected function log()
+    protected function logger()
     {
-        $logger = $this->logger;
-        return function(TransferStats $stats) use($logger){
-            $request = $stats->getRequest();
-            $req = $this->log_request($request);
-            $response = $stats->hasResponse() ? $stats->getResponse() : null;
-            $handlerStats = $stats->getHandlerStats();
-            $totaltime = $handlerStats['total_time'];
-            $logger->info("request: req($req) res($response) time($totaltime)");
+        return function (callable $handler) {
+            return function (RequestInterface $request, array $options) use ($handler) {
+                $req = $this->log_request($request);
+                $this->logger->info("send request: req($req)");
+                return $handler($request, $options);
+            };
         };
     }
 
