@@ -41,7 +41,7 @@ abstract class BaseRpc extends IocBase
             'handler'  => $stack,
             'base_uri' => $this->base_uri[ENV],
             'timeout'  => $this->timeout,
-            'on_stats' => $this->log,
+            'on_stats' => $this->log(),
         ));
     }
 
@@ -127,14 +127,17 @@ abstract class BaseRpc extends IocBase
         };
     }
 
-    protected function log(TransferStats $stats)
+    protected function log()
     {
-        $request = $stats->getRequest();
-        $req = $this->log_request($request);
-        $response = $stats->hasResponse() ? $stats->getResponse() : null;
-        $handlerStats = $stats->getHandlerStats();
-        $totaltime = $handlerStats['total_time'];
-        $this->logger->info("request: req($req) res($response) time($totaltime)");
+        $logger = $this->logger;
+        return function(TransferStats $stats) use($logger){
+            $request = $stats->getRequest();
+            $req = $this->log_request($request);
+            $response = $stats->hasResponse() ? $stats->getResponse() : null;
+            $handlerStats = $stats->getHandlerStats();
+            $totaltime = $handlerStats['total_time'];
+            $logger->info("request: req($req) res($response) time($totaltime)");
+        };
     }
 
     protected function log_request($request)
