@@ -17,7 +17,7 @@ abstract class V4Rpc extends BaseRpc
         $stack->push($this->replace_uri());
         $stack->push($this->v4_sign());
         $stack->push(Middleware::retry($this->retryDecider(), $this->retryDelay()));
-        $stack->push($this->log());
+        $stack->push($this->logger());
 
         $this->client = new Client(array(
             'handler'  => $stack,

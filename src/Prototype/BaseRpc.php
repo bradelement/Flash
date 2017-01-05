@@ -36,7 +36,7 @@ abstract class BaseRpc extends IocBase
         $stack = HandlerStack::create();
         $stack->push($this->replace_uri());
         $stack->push(Middleware::retry($this->retryDecider(), $this->retryDelay()));
-        $stack->push($this->log());
+        $stack->push($this->logger());
 
         $this->client = new Client(array(
             'handler'  => $stack,
