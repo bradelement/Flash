@@ -12,6 +12,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\TransferStats;
 
 abstract class BaseRpc extends IocBase
 {
@@ -28,19 +29,19 @@ abstract class BaseRpc extends IocBase
         $this->init();
     }
 
-    protected function init()
+    public function init()
     {
         $this->logger = $this->ci->get('logger');
 
         $stack = HandlerStack::create();
         $stack->push($this->replace_uri());
         $stack->push(Middleware::retry($this->retryDecider(), $this->retryDelay()));
-        $stack->push($this->log($this->logger));
 
         $this->client = new Client(array(
             'handler'  => $stack,
             'base_uri' => $this->base_uri[ENV],
             'timeout'  => $this->timeout,
+            'on_stats' => $this->log,
         ));
     }
 
@@ -60,17 +61,13 @@ abstract class BaseRpc extends IocBase
         $request_option = $this->merge_option($request_option, $default_options);
         $request_option = $this->merge_option($request_option, $options);
 
-        $clock = new Clock();
         try {
             $response = $this->client->request($method, $uri, $request_option);
         } catch (TransferException $e) {
-            $response = $e->getResponse();
+            if ($e->hasResponse()) {
+                $response = $e->getResponse();
+            }
         }
-        $time = $clock->spent();
-
-        $log_id = LOG_ID;
-        $res = $this->log_response($response);
-        $this->logger->info("get response: LOG_ID($log_id) time($time) res($res)");
 
         return $response;
     }
@@ -130,17 +127,14 @@ abstract class BaseRpc extends IocBase
         };
     }
 
-    protected function log($logger)
+    protected function log(TransferStats $stats)
     {
-        return function(callable $handler) use($logger) {
-            return function(RequestInterface $request, array $options)
-            use ($handler, $logger) {
-                $log_id = LOG_ID;
-                $req = $this->log_request($request);
-                $logger->info("send request: LOG_ID($log_id) req($req)");
-                return $handler($request, $options);
-            };
-        };
+        $request = $stats->getRequest();
+        $req = $this->log_request($request);
+        $response = $stats->hasResponse() ? $stats->getResponse() : null;
+        $handlerStats = $stats->getHandlerStats();
+        $totaltime = $handlerStats['total_time'];
+        $this->logger->info("request: req($req) res($response) time($totaltime)");
     }
 
     protected function log_request($request)
