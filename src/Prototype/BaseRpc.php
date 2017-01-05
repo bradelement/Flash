@@ -124,7 +124,7 @@ abstract class BaseRpc extends IocBase
                         return $replace[$key];
                     };
                     $uri = preg_replace_callback('/%7B.*?%7D/', $func2, $uri);
-                    $request = $request->withUri(new Uri($uri));
+                    $request = $request->withUri(new Uri($uri), true);//preserve host...
                 }
                 return $handler($request, $options);
             };
